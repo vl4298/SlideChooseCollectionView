@@ -31,7 +31,7 @@ class ViewController: UIViewController {
   var preSelectedItem = 0
   var displayLink: CADisplayLink?
   var finalContentOffsetX: CGFloat = 0
-  var lastTimeTick: NSTimeInterval = 0
+  var lastTimeTick: TimeInterval = 0
   var animationPointPerSecond: Double = 300
   var isLeft: CGFloat = 1
   var model = [
@@ -81,13 +81,13 @@ class ViewController: UIViewController {
 // MARK: CollectionView
 extension ViewController: UICollectionViewDataSource {
   
-  func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+  func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
     return model.count
   }
   
-  func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-    let cell = collectionView.dequeueReusableCellWithReuseIdentifier("ColorCell", forIndexPath: indexPath)
-    cell.backgroundColor = model[indexPath.item]
+  func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ColorCell", for: indexPath)
+    cell.backgroundColor = model[(indexPath as NSIndexPath).item]
     cell.layer.cornerRadius = 40.0
     return cell
   }
@@ -95,25 +95,24 @@ extension ViewController: UICollectionViewDataSource {
 }
 
 extension ViewController: UICollectionViewDelegate {
-  func collectionView(collectionView: UICollectionView, shouldSelectItemAtIndexPath indexPath: NSIndexPath) -> Bool {
-    if indexPath.item == 0 { return false }
+  func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+    if (indexPath as NSIndexPath).item == 0 { return false }
     return true
   }
   
-  func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-    
-    isLeft = indexPath.item > preSelectedItem ? 1 : -1
-    preSelectedItem = indexPath.item
+  func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    isLeft = CGFloat(indexPath.item - preSelectedItem)
+    preSelectedItem = (indexPath as NSIndexPath).item
     let finalOffsetX = collectionView.contentOffset.x + (110 * isLeft)
     beginAnimation(finalOffsetX)
   }
   
-  func beginAnimation(finalContentOffsetX: CGFloat) {
+  func beginAnimation(_ finalContentOffsetX: CGFloat) {
     lastTimeTick = 0
     self.finalContentOffsetX = finalContentOffsetX
     displayLink = CADisplayLink(target: self, selector: #selector(self.displayLinkTick))
     displayLink!.frameInterval = 1
-    displayLink!.addToRunLoop(NSRunLoop.currentRunLoop(), forMode: NSRunLoopCommonModes)
+    displayLink!.add(to: RunLoop.current, forMode: RunLoopMode.commonModes)
   }
   
   func endAnimation() {
@@ -128,17 +127,27 @@ extension ViewController: UICollectionViewDelegate {
     
     let currentTimestamp = displayLink!.timestamp
     let delta = CGFloat(animationPointPerSecond * (currentTimestamp - lastTimeTick))
-    if isLeft == 1 {
+    if isLeft > 0 {
       collectionView.contentOffset.x += delta
     } else {
       collectionView.contentOffset.x -= delta
     }
     lastTimeTick = currentTimestamp
     
-    if (collectionView.contentOffset.x > finalContentOffsetX && isLeft == 1) || (collectionView.contentOffset.x < finalContentOffsetX && isLeft == -1) {
+    if (collectionView.contentOffset.x > finalContentOffsetX && isLeft > 0) || (collectionView.contentOffset.x < finalContentOffsetX && isLeft < 0) {
       collectionView.contentOffset.x = finalContentOffsetX
       endAnimation()
     }
+  }
+}
+
+// MARK: UIScrollViewDelegate
+extension ViewController: UIScrollViewDelegate {
+  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    let centerPoint = view.center
+    let centerPointInScrollView = scrollView.convert(centerPoint, from: view)
+    let currentIndexPath = collectionView.indexPathForItem(at: centerPointInScrollView)
+    preSelectedItem = currentIndexPath!.item
   }
 }
 

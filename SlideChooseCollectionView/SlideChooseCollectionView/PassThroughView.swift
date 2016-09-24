@@ -10,31 +10,31 @@ import UIKit
 
 class PassThroughView: UIView {
 
-  override func pointInside(point: CGPoint, withEvent event: UIEvent?) -> Bool {
+  override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
     return false
   }
   
   required init?(coder aDecoder: NSCoder) {
     super.init(coder: aDecoder)
-    opaque = false
+    isOpaque = false
   }
   
-  override func drawRect(rect: CGRect) {
+  override func draw(_ rect: CGRect) {
     let context = UIGraphicsGetCurrentContext()
     
-    let holeFrame = CGRect(x: CGRectGetMidX(rect) - 40.0, y: CGRectGetMidY(rect) - 40.0, width: 80.0, height: 80.0)
+    let holeFrame = CGRect(x: rect.midX - 40.0, y: rect.midY - 40.0, width: 80.0, height: 80.0)
     let grayColor = UIColor(red: 120/255, green: 130/255, blue: 140/255, alpha: 0.7)
     grayColor.setFill()
     UIRectFill(rect)
     
-    let ovalPath = UIBezierPath(ovalInRect: holeFrame)
+    let ovalPath = UIBezierPath(ovalIn: holeFrame)
     
-    CGContextSaveGState(context)
+    context?.saveGState()
     ovalPath.addClip()
-    UIColor.clearColor().setFill()
+    UIColor.clear.setFill()
     UIRectFill(rect)
     
-    CGContextRestoreGState(context)
+    context?.restoreGState()
   }
 
 }

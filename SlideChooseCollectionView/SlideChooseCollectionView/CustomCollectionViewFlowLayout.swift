@@ -30,12 +30,12 @@ class CustomCollectionViewFlowLayout: UICollectionViewFlowLayout {
     minimumLineSpacing = 30.0
   }
   
-  override func shouldInvalidateLayoutForBoundsChange(newBounds: CGRect) -> Bool {
+  override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
     return true
   }
   
-  override func layoutAttributesForElementsInRect(rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-    guard let attributesArray = super.layoutAttributesForElementsInRect(rect) else { return nil }
+  override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+    guard let attributesArray = super.layoutAttributesForElements(in: rect) else { return nil }
     
     guard let collectionView = self.collectionView else { return attributesArray }
     
@@ -51,8 +51,8 @@ class CustomCollectionViewFlowLayout: UICollectionViewFlowLayout {
     return attributesArray
   }
   
-  override func layoutAttributesForItemAtIndexPath(indexPath: NSIndexPath) -> UICollectionViewLayoutAttributes? {
-    guard let attribute = super.layoutAttributesForItemAtIndexPath(indexPath) else { return nil }
+  override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
+    guard let attribute = super.layoutAttributesForItem(at: indexPath) else { return nil }
     
     let visibleRect = CGRect(x: collectionView!.contentOffset.x,
                              y: collectionView!.contentOffset.y,
@@ -63,7 +63,7 @@ class CustomCollectionViewFlowLayout: UICollectionViewFlowLayout {
     return attribute
   }
   
-  override func targetContentOffsetForProposedContentOffset(proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
+  override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
     var offsetAdjust: CGFloat = 10000
     let horizontalCenter = proposedContentOffset.x + collectionView!.bounds.width / 2
     
@@ -72,10 +72,10 @@ class CustomCollectionViewFlowLayout: UICollectionViewFlowLayout {
                               width: collectionView!.bounds.width,
                               height: collectionView!.bounds.height)
     
-    guard let attributesArray = super.layoutAttributesForElementsInRect(proposedRect) else { return proposedContentOffset }
+    guard let attributesArray = super.layoutAttributesForElements(in: proposedRect) else { return proposedContentOffset }
     
     for attribute in attributesArray {
-      if case UICollectionElementCategory.SupplementaryView = attribute.representedElementCategory { continue }
+      if case UICollectionElementCategory.supplementaryView = attribute.representedElementCategory { continue }
       
       let itemHorizontalCenter = attribute.center.x
       if fabs(itemHorizontalCenter - horizontalCenter) < fabs(offsetAdjust) {
@@ -89,13 +89,12 @@ class CustomCollectionViewFlowLayout: UICollectionViewFlowLayout {
   
   func apply(layoutAttributes attributes: UICollectionViewLayoutAttributes, for visibleRect: CGRect) {
     
-    let ACTIVE_DISTANCE = collectionView!.bounds.width / 2 + 40.0
-    
+    let ACTIVE_DISTANCE = collectionView!.bounds.width + 160.0
     // skip supplementary kind
-    if case UICollectionElementCategory.SupplementaryView = attributes.representedElementCategory { return }
+    if case UICollectionElementCategory.supplementaryView = attributes.representedElementCategory { return }
     
-    let distanceFromVisibleRectToItem: CGFloat = CGRectGetMidX(visibleRect) - attributes.center.x
-    
+    let distanceFromVisibleRectToItem: CGFloat = visibleRect.midX - attributes.center.x
+
     var transform: CATransform3D!
     if fabs(distanceFromVisibleRectToItem) < ACTIVE_DISTANCE {
       
@@ -106,9 +105,6 @@ class CustomCollectionViewFlowLayout: UICollectionViewFlowLayout {
       transform = CATransform3DScale(CATransform3DIdentity, factorScale, factorScale, 1.0)
       attributes.zIndex = 1
       attributes.transform3D = transform
-      if factorScale == 1 && centerItemRect == nil {
-        centerItemRect = attributes.frame
-      }
     } else {
       transform = CATransform3DIdentity
       attributes.transform3D = transform
